@@ -25,7 +25,14 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+
+app.use(
+  cors({
+    origin: "*", // Allow all origins (change this in production)
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
+  })
+);
 
 const PORT = process.env.PORT || 3000;
 
