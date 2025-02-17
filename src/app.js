@@ -25,14 +25,7 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
-
-app.use(
-  cors({
-    origin: "*", // Allow all origins (change this in production)
-    methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type,Authorization",
-  })
-);
+app.use(cors({ origin: "*" }));
 
 const PORT = process.env.PORT || 3000;
 
@@ -64,11 +57,15 @@ io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("joinChat", ({ userId }) => {
-    socket.join(userId); // Join room for the user
+    socket.join(userId);
   });
 
   socket.on("sendMessage", (message) => {
-    io.to(message.receiverId).emit("newMessage", message); // Send message to receiver
+    io.to(message.receiverId).emit("newMessage", message);
+  });
+
+  socket.on("getMessage", (message) => {
+    io.to(message.receiverId).emit("newMessage", message);
   });
 
   socket.on("disconnect", () => {
