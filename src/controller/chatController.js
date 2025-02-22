@@ -84,3 +84,27 @@ export const markChatAsSeen = async (req, res) => {
     res.status(500).json({ message: "Failed to mark messages as seen" });
   }
 };
+
+export const editChatMessage = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ message: "Message content is required" });
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat message not found" });
+    }
+
+    chat.message = message;
+    chat.editedAt = new Date();
+    await chat.save();
+
+    res.json({ message: "Chat message updated successfully", chat });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update chat message" });
+  }
+};
