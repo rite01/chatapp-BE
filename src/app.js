@@ -6,6 +6,8 @@ import { v2 as cloudinary } from "cloudinary";
 import jwt from "jsonwebtoken";
 import http from "http";
 import { Server } from "socket.io";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
@@ -40,6 +42,26 @@ export const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: "1d" });
 };
 
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Chat App API",
+      version: "1.0.0",
+      description: "API documentation for Chat App",
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+      },
+    ],
+  },
+  apis: ["./src/routes/*.js"], // Update this path
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "UP", timestamp: new Date().toISOString() });
 });
@@ -60,6 +82,14 @@ io.on("connection", (socket) => {
     socket.join(userId);
   });
 
+  socket.on("sendFriendRequest", ({ senderId, receiverId }) => {
+    io.to(receiverId).emit("friendRequestReceived", { senderId });
+  });
+
+  socket.on("acceptFriendRequest", ({ senderId, receiverId }) => {
+    io.to(senderId).emit("friendRequestAccepted", { receiverId });
+  });
+
   socket.on("sendMessage", (message) => {
     io.to(message.receiverId).emit("newMessage", message);
   });
@@ -73,35 +103,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// // ====== SOCKET.IO INTEGRATION ======
-// const users = new Map(); // To store connected users
-
-// io.on("connection", (socket) => {
-//   socket.on("join", (userId) => {
-//     users.set(userId, socket.id);
-//     console.log(`User ${userId} connected with socket ID: ${socket.id}`);
-//   });
-
-//   socket.on("sendMessage", ({ senderId, receiverId, message }) => {
-//     console.log(`Message from ${senderId} to ${receiverId}: ${message}`);
-//     if (users.has(receiverId)) {
-//       io.to(users.get(receiverId)).emit("receiveMessage", {
-//         senderId,
-//         message,
-//       });
-//     }
-//   });
-
-//   socket.on("disconnect", () => {
-//     users.forEach((value, key) => {
-//       if (value === socket.id) {
-//         users.delete(key);
-//         console.log(`User ${key} disconnected`);
-//       }
-//     });
-//   });
-// });
-
 server.listen(PORT, () => {
   console.log(`App running on port ${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
 });
