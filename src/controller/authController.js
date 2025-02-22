@@ -55,3 +55,38 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const updateUser = async (req, res) => {
+  try {
+    const { name, userId } = req.body;
+    let profilePicUrl = "";
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "profiles",
+      });
+      profilePicUrl = result.secure_url;
+    }
+
+    const updatedUser = await Item.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          name: name || undefined,
+          profilePic: profilePicUrl || undefined,
+        },
+      },
+      { new: true, omitUndefined: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
