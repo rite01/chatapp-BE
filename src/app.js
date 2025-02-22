@@ -54,9 +54,12 @@ const swaggerOptions = {
       {
         url: `http://localhost:${PORT}`,
       },
+      {
+        url: process.env.DEPLOYED_URL || "https://chatapp-be-1.onrender.com",
+      },
     ],
   },
-  apis: ["./src/routes/*.js"], // Update this path
+  apis: ["./src/routes/*.js"],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
@@ -106,4 +109,9 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`App running on port ${PORT}`);
   console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+  if (process.env.DEPLOYED_URL) {
+    console.log(
+      `Swagger docs available at ${process.env.DEPLOYED_URL}/api-docs`
+    );
+  }
 });
